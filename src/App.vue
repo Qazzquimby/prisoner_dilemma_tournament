@@ -220,7 +220,8 @@ simulating.value = false;
       <td v-for="(program, index) in programs" :key="index" class="cell"
       :style="{
         color: 'black',
-        backgroundColor: getColor(avgPayoffTotalByModel[index])
+        backgroundColor: getColor(avgPayoffTotalByModel[index]),
+        lineHeight: '0.2rem',
       }"
       >
         <p>{{ index }}</p>
