@@ -11,11 +11,11 @@ let sourceCodes = [
   ["r = (c == s || !c.match('Math')) ? 1 : 0;", "cooperate with self and not using math"],
   ['r = c.length > 15', "cooperate if code is longer than 15 characters"],
   [
-    'r = d === m ? 1 : f(c, d, m, "r=1", c, f, h, i) === 1 && f(c, d, m, "r=0", c, f, h, i) === 0 ? 1 : 0;',
+    'let r = d === m ? 1 : f(c, d, m, "r=1", c, f, h, i) === 1 && f(c, d, m, "r=0", c, f, h, i) === 0 ? 1 : 0;',
     "cooperate with self and opponents that simulation says will mirror you"
   ],
   [
-    'r;try{const hC=h.map(()=>({m:1})),hD=h.map(()=>({m:0}));r=d==m||(f(c,d,m,"r=1",c,f,hC)==1&&f(c,d,m,"r=0",c,f,hD)==0)||(d!=m&&h.length&&f(c,d,m,s,c,f,h)==h.slice(-1)[0].o)?1:0}catch(e){r=0}',
+    'let r;try{const hC=h.map(()=>({m:1})),hD=h.map(()=>({m:0}));r=d==m||(f(c,d,m,"r=1",c,f,hC)==1&&f(c,d,m,"r=0",c,f,hD)==0)||(d!=m&&h.length&&f(c,d,m,s,c,f,h)==h.slice(-1)[0].o)?1:0}catch(e){r=0}',
     "Cooperate with self. Cooperate with opponent will cooperate if you always cooperate and defect if you always defect. Cooperate if opponent expected to repeat their last action. Else defect."
   ],
   ['r = 0; setTimeout(function() { }, 750);', "setTimeout trap defector"],
@@ -47,12 +47,12 @@ let sourceCodes = [
     "Tit for tat that defects on round 99"
   ],
   [
-      'if (c = "r = h.length === 0 ? 1 : h[h.length - 1].o;") {r=1} else {r = 0};',
-      "Cooperate only against one implementation of tit for tat, else defect."
+    'if (c = "r = h.length === 0 ? 1 : h[h.length - 1].o;") {r=1} else {r = 0};',
+    "Cooperate only against one implementation of tit for tat, else defect."
   ],
   [
-      'if (c.includes("eval") || c.includes("f(") || c.includes(";h") || c.includes(" h")) {r = 1} else {r = 0};',
-      "Cooperate if they simulate or look at history, else defect"
+    'if (c.includes("eval") || c.includes("f(") || c.includes(";h") || c.includes(" h")) {r = 1} else {r = 0};',
+    "Cooperate if they simulate or look at history, else defect"
   ],
 
   //mine
@@ -64,6 +64,7 @@ let programs = sourceCodes.map(([sourceCode, description]) => {
     sourceCode,
     description,
     scores: [],
+    dq: false,
   };
 });
 
@@ -126,9 +127,14 @@ function f(a, d, m, c, s, f, h, i) {
   let startTime = performance.now();
 
   const func = new Function('d', 'm', 'c', 's', 'f', 'h', 'i',
-      `r=9;
-       ${a}
-       return r;`
+  `
+  r=9;
+  try{
+    ${a}
+  }catch(e){
+    return "ERR"
+  }
+  return r;`
   );
 
   const result = func(d, m, c, s, f, h, i);
@@ -169,13 +175,18 @@ function runRound(myProgram, opponentProgram, myId, opponentId, history) {
       history, // i
   )
 
-  if (myDecision === "ERR" || myDecision !== 0 && myDecision !== 1) {
-    console.log('ERR', myProgram, 'against', opponentProgram);
-    return
+  const validDecisions = [0, 1, true, false];
+
+  if (!validDecisions.includes(myDecision)) {
+    console.log('ERR', myDecision, myProgram, 'against', opponentProgram);
+    myProgram.dq = true;
   }
-  if (opponentDecision === "ERR" || opponentDecision !== 0 && opponentDecision !== 1) {
-    console.log('ERR', opponentProgram, 'against', myProgram);
-    return;
+  if (!validDecisions.includes(opponentDecision)) {
+    console.log('ERR', opponentDecision, opponentProgram, 'against', myProgram);
+    opponentProgram.dq = true;
+  }
+  if (!validDecisions.includes(myDecision) || !validDecisions.includes(opponentDecision)) {
+    return
   }
 
   history.push({"m": myDecision, "o": opponentDecision});
@@ -260,7 +271,9 @@ simulating.value = false;
 
   <div>
     <span>Currently hovering: </span>
-    <span v-if="typeof hoveredProgram === 'number'">{{ programs[hoveredProgram].description }}</span>
+    <span v-if="typeof hoveredProgram === 'number'">{{
+        programs[hoveredProgram].description
+      }}</span>
     <span v-else>Nothing</span>
   </div>
 
@@ -271,6 +284,7 @@ simulating.value = false;
         color: 'black',
         backgroundColor: getColor(avgPayoffTotalByModel[index]),
         lineHeight: '0.2rem',
+        border: program.dq ? '5px solid black' : 'none'
       }"
           @mouseover="hoveredProgram = index"
           @mouseout="hoveredProgram = null"
