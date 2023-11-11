@@ -243,6 +243,7 @@ function runTournament() {
   console.log('programs', programs);
 }
 
+const hoveredProgram = ref(null)
 const simulating = ref(true);
 
 runTournament()
@@ -257,6 +258,12 @@ simulating.value = false;
     Simulating...
   </div>
 
+  <div>
+    <span>Currently hovering: </span>
+    <span v-if="typeof hoveredProgram === 'number'">{{ programs[hoveredProgram].description }}</span>
+    <span v-else>Nothing</span>
+  </div>
+
   <table style="width: 100%">
     <tr>
       <td v-for="(program, index) in programs" :key="index" class="cell"
@@ -265,6 +272,8 @@ simulating.value = false;
         backgroundColor: getColor(avgPayoffTotalByModel[index]),
         lineHeight: '0.2rem',
       }"
+          @mouseover="hoveredProgram = index"
+          @mouseout="hoveredProgram = null"
       >
         <p>{{ index }}</p>
         <p> {{ avgPayoffTotalByModel[index] }} </p>
