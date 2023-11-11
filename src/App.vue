@@ -279,6 +279,7 @@ simulating.value = false;
 
   <table style="width: 100%">
     <tr>
+      <td></td>
       <td v-for="(program, index) in programs" :key="index" class="cell"
           :style="{
         color: 'black',
@@ -294,6 +295,7 @@ simulating.value = false;
       </td>
     </tr>
     <tr v-for="(row, i) in interactions" :key="i">
+      <td>{{i}}</td>
       <td v-for="(payoffHistory, j) in row" :key="j" class="cell"
           :style="{
         color: 'black',
