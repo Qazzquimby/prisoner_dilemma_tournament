@@ -74,7 +74,12 @@ const interactions = reactive(programs.map(() => {
 }));
 
 function getAvgPayoffsForMatchup(payoffHistory) {
-  const avg = payoffHistory.reduce((acc, score) => acc + score, 0) / payoffHistory.length
+  const avg = payoffHistory.reduce((acc, score) => {
+    if (isNaN(score)) {
+      return acc
+    }
+    return acc + score
+  }, 0) / payoffHistory.length
   return avg.toFixed(2)
 }
 
@@ -92,7 +97,11 @@ const avgPayoffTotalByModel = computed(() => {
   for (let i = 0; i < programs.length; i++) {
     let total = 0
     for (let j = 0; j < programs.length; j++) {
-      total += parseFloat(avgPayoffsForMatchups.value[j][i])
+      const avgPayoffsForMatchup = avgPayoffsForMatchups.value[j][i]
+      if (isNaN(avgPayoffsForMatchup)) {
+        continue
+      }
+      total += parseFloat(avgPayoffsForMatchup)
     }
     total /= programs.length
     avgPayoffByModel.push(total.toFixed(2))
@@ -203,6 +212,10 @@ function runMatch(myProgram, opponentProgram, myId, opponentId) {
   const opponentScore = payoffs.reduce((acc, [_, b]) => {
     return acc + b;
   }, 0) / payoffs.length;
+
+  if (isNaN(myScore) || isNaN(opponentScore)) {
+    return
+  }
 
   myProgram.scores.push(myScore);
   opponentProgram.scores.push(opponentScore);
