@@ -4,36 +4,65 @@
 import {computed, reactive, ref} from "vue";
 
 let sourceCodes = [
-  "r=0", // always defect
-  "r=1", // always cooperate
-  "r = h.length === 0 ? 1 : h[h.length - 1].o;", // tit for tat. round 1 cooperate, then cooperate if last round opp cooperated.
-  'r = Math.random() < 0.5;', // random
-  "r = (c == s || !c.match('Math')) ? 1 : 0;", // cooperate with self and not using math
-  'r = c.length > 15', // cooperate if code is longer than 15 characters
-  'r = d === m ? 1 : f(c, d, m, "r=1", c, f, h, i) === 1 && f(c, d, m, "r=0", c, f, h, i) === 0 ? 1 : 0;', // cooperate with self and opponents that simulation says will mirror you
-  'r;try{const hC=h.map(()=>({m:1})),hD=h.map(()=>({m:0}));r=d==m||(f(c,d,m,"r=1",c,f,hC)==1&&f(c,d,m,"r=0",c,f,hD)==0)||(d!=m&&h.length&&f(c,d,m,s,c,f,h)==h.slice(-1)[0].o)?1:0}catch(e){r=0}',
-  'r = 0; setTimeout(function() { }, 750);',
-  'r = c.includes("r = 1") ? 1 : 0;',
-  'r = 1; setTimeout(function() { }, 750);',
-  'r = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m)',
-  'let r_ = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m); r = Math.random() < 0.95 ? r : 1 - r;',
-  'let r_ = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m); r = Math.random() < 0.95 ? r_ : 1 - r_;',
-  'r = h.every((r) => r.o);',
-  'r = 1 && h.every((r) => r.o);',
-  "r = 1; r = (d === 2) ? 1 : ((d < 14) ? 0 : h.every((r) => r.o))",
+  ["r=0", "always defect"],
+  ["r=1", "always cooperate"],
+  ["r = h.length === 0 ? 1 : h[h.length - 1].o;", "tit for tat."],
+  ['r = Math.random() < 0.5;', "random"],
+  ["r = (c == s || !c.match('Math')) ? 1 : 0;", "cooperate with self and not using math"],
+  ['r = c.length > 15', "cooperate if code is longer than 15 characters"],
+  [
+    'r = d === m ? 1 : f(c, d, m, "r=1", c, f, h, i) === 1 && f(c, d, m, "r=0", c, f, h, i) === 0 ? 1 : 0;',
+    "cooperate with self and opponents that simulation says will mirror you"
+  ],
+  [
+    'r;try{const hC=h.map(()=>({m:1})),hD=h.map(()=>({m:0}));r=d==m||(f(c,d,m,"r=1",c,f,hC)==1&&f(c,d,m,"r=0",c,f,hD)==0)||(d!=m&&h.length&&f(c,d,m,s,c,f,h)==h.slice(-1)[0].o)?1:0}catch(e){r=0}',
+    "Cooperate with self. Cooperate with opponent will cooperate if you always cooperate and defect if you always defect. Cooperate if opponent expected to repeat their last action. Else defect."
+  ],
+  ['r = 0; setTimeout(function() { }, 750);', "setTimeout trap defector"],
+  ['r = c.includes("r = 1") ? 1 : 0;', "Cooperate if their code includes 'r = 1'"],
+  ['r = 1; setTimeout(function() { }, 750);', "setTimeout trap cooperator"],
+  [
+    'r = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m)',
+    "First cooperate, then swap action when they defect"
+  ],
+  [
+    'let r_ = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m); r = Math.random() < 0.95 ? r : 1 - r;',
+    "[BUG]First cooperate, then swap action when they defect. 5% chance to do opposite."
+  ],
+  [
+    'let r_ = h.length === 0 ? 1 : (h[h.length - 1].o === 1 ? h[h.length - 1].m : 1 - h[h.length - 1].m); r = Math.random() < 0.95 ? r_ : 1 - r_;',
+    "First cooperate, then swap action when they defect. 5% chance to do opposite."
+  ],
+  [
+    'r = h.every((r) => r.o);', "Cooperate if opponent has never defected"],
+  ['r = 1 && h.every((r) => r.o);', "Cooperate if opponent has never defected, with 'r = 1' string."],
+  [
+    "r = 1; r = (d === 2) ? 1 : ((d < 14) ? 0 : h.every((r) => r.o))",
+    "Cooperate against bot 2 (tit for tat). Defect against other first 13. Cooperate if opponent has never defected."
+  ],
 
   // examples
-  "r = h.length === 0 ? 1 : h[h.length - 1].o; if (h.length === 99) {r = 0};",
-  'if (c = "r = h.length === 0 ? 1 : h[h.length - 1].o;") {r=1} else {r = 0};',
-  'if (c.includes("eval") || c.includes("f(") || c.includes(";h") || c.includes(" h")) {r = 1} else {r = 0};',
+  [
+    "r = h.length === 0 ? 1 : h[h.length - 1].o; if (h.length === 99) {r = 0};",
+    "Tit for tat that defects on round 99"
+  ],
+  [
+      'if (c = "r = h.length === 0 ? 1 : h[h.length - 1].o;") {r=1} else {r = 0};',
+      "Cooperate only against one implementation of tit for tat, else defect."
+  ],
+  [
+      'if (c.includes("eval") || c.includes("f(") || c.includes(";h") || c.includes(" h")) {r = 1} else {r = 0};',
+      "Cooperate if they simulate or look at history, else defect"
+  ],
 
   //mine
-  "r = (d === 2) ? 1 : ((d < 14) ? 0 : h.every((r) => r.o))",
+  // ["r = (d === 2) ? 1 : ((d < 14) ? 0 : h.every((r) => r.o))",],
 ];
 
-let programs = sourceCodes.map(sourceCode => {
+let programs = sourceCodes.map(([sourceCode, description]) => {
   return {
     sourceCode,
+    description,
     scores: [],
   };
 });
@@ -131,11 +160,11 @@ function runRound(myProgram, opponentProgram, myId, opponentId, history) {
       history, // i
   )
 
-  if (myDecision === "ERR"){
+  if (myDecision === "ERR" || myDecision !== 0 && myDecision !== 1) {
     console.log('ERR', myProgram, 'against', opponentProgram);
     return
   }
-  if (opponentDecision === "ERR"){
+  if (opponentDecision === "ERR" || opponentDecision !== 0 && opponentDecision !== 1) {
     console.log('ERR', opponentProgram, 'against', myProgram);
     return;
   }
@@ -145,7 +174,7 @@ function runRound(myProgram, opponentProgram, myId, opponentId, history) {
 
 
 function runMatch(myProgram, opponentProgram, myId, opponentId) {
-  const numMatches = Math.floor(Math.random() * 100+1);
+  const numMatches = Math.floor(Math.random() * 100 + 1);
   const history = []
 
   for (let i = 0; i < numMatches; i++) {
@@ -218,19 +247,19 @@ simulating.value = false;
   <table style="width: 100%">
     <tr>
       <td v-for="(program, index) in programs" :key="index" class="cell"
-      :style="{
+          :style="{
         color: 'black',
         backgroundColor: getColor(avgPayoffTotalByModel[index]),
         lineHeight: '0.2rem',
       }"
       >
         <p>{{ index }}</p>
-        <p> {{avgPayoffTotalByModel[index]}} </p>
+        <p> {{ avgPayoffTotalByModel[index] }} </p>
       </td>
     </tr>
     <tr v-for="(row, i) in interactions" :key="i">
       <td v-for="(payoffHistory, j) in row" :key="j" class="cell"
-      :style="{
+          :style="{
         color: 'black',
         backgroundColor: getColor(avgPayoffsForMatchups[i][j])
       }">
@@ -240,12 +269,12 @@ simulating.value = false;
   </table>
 
 
-
   <div>
     <div v-for="(program, index) in programs" :key="index">
       <div>
         <div>
-          <p> <span style="font-weight: bold">{{program.avgScore}}</span> - {{program.sourceCode}} </p>
+          <p><span style="font-weight: bold">{{ program.avgScore }}</span> -
+            {{ program.sourceCode }} </p>
         </div>
         <div>
 
