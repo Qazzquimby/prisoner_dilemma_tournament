@@ -44,17 +44,32 @@ const interactions = reactive(programs.map(() => {
   });
 }));
 
-function getDisplayScore(payoffHistory) {
+function getAvgPayoffsForMatchup(payoffHistory) {
   const avg = payoffHistory.reduce((acc, score) => acc + score, 0) / payoffHistory.length
   return avg.toFixed(2)
 }
 
-const displayScores = computed(() => {
+const avgPayoffsForMatchups = computed(() => {
   return interactions.map((row) => {
     return row.map((payoffHistory) => {
-      return getDisplayScore(payoffHistory)
+      return getAvgPayoffsForMatchup(payoffHistory)
     })
   })
+})
+
+const avgPayoffTotalByModel = computed(() => {
+  // average columns
+  const avgPayoffByModel = []
+  for (let i = 0; i < programs.length; i++) {
+    let total = 0
+    for (let j = 0; j < programs.length; j++) {
+      total += parseFloat(avgPayoffsForMatchups.value[j][i])
+    }
+    total /= programs.length
+    avgPayoffByModel.push(total.toFixed(2))
+  }
+
+  return avgPayoffByModel
 })
 
 function getPayoff(aCooperates, bCooperates) {
@@ -68,18 +83,6 @@ function getPayoff(aCooperates, bCooperates) {
     return [1, 1];
   }
 }
-
-
-let getDecision = async (d, m, c, s, f, h, i, playerCode) => {
-  let r = 9;
-
-  //Here we use the user-submitted code to make a decision
-  eval(playerCode);
-
-  return Number(r);
-};
-
-let r = 9;
 
 function f(a, d, m, c, s, f, h, i) {
   let startTime = performance.now();
@@ -191,7 +194,6 @@ function runTournament() {
     }
   }
 
-
   for (let i = 0; i < programs.length; i++) {
     programs[i].avgScore = programs[i].scores.reduce((acc, score) => acc + score, 0) / programs[i].scores.length;
   }
@@ -214,13 +216,24 @@ simulating.value = false;
   </div>
 
   <table style="width: 100%">
+    <tr>
+      <td v-for="(program, index) in programs" :key="index" class="cell"
+      :style="{
+        color: 'black',
+        backgroundColor: getColor(avgPayoffTotalByModel[index])
+      }"
+      >
+        <p>{{ index }}</p>
+        <p> {{avgPayoffTotalByModel[index]}} </p>
+      </td>
+    </tr>
     <tr v-for="(row, i) in interactions" :key="i">
       <td v-for="(payoffHistory, j) in row" :key="j" class="cell"
       :style="{
         color: 'black',
-        backgroundColor: getColor(displayScores[i][j])
+        backgroundColor: getColor(avgPayoffsForMatchups[i][j])
       }">
-        {{ displayScores[i][j] }}
+        {{ avgPayoffsForMatchups[i][j] }}
       </td>
     </tr>
   </table>
