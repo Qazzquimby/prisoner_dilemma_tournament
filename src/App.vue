@@ -40,7 +40,7 @@ let programs = sourceCodes.map(sourceCode => {
 
 const interactions = reactive(programs.map(() => {
   return programs.map(() => {
-    return [1]
+    return []
   });
 }));
 
@@ -246,7 +246,7 @@ const getColor = (avgPayoff) => {
 function runTournament() {
   for (let repeat = 0; repeat < 1; repeat++) {
     for (let i = 0; i < programs.length; i++) {
-      for (let j = i + 1; j < programs.length; j++) {
+      for (let j = 0; j < programs.length; j++) {
         runMatch(programs[i], programs[j], i, j);
       }
     }
