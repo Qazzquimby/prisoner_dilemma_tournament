@@ -177,72 +177,11 @@ function runMatch(myProgram, opponentProgram, myId, opponentId) {
 }
 
 const getColor = (avgPayoff) => {
-  // const percentageGreen = value;
-  // const percentageRed = 1 - value;
-  // const red = Math.round(percentageRed * 255);
-  // const green = Math.round(percentageGreen * 255);
   const hue = (avgPayoff / 3) * 120
 
   return `hsl(${hue}, 50%, 50%)` //`rgb(${red}, ${green}, 0)`;
 };
 
-// function wrapSource(sourceCode) {
-//   return `async function(d,m,c,s,f,h,i) {
-//   let r = 9;
-//   ${sourceCode}
-//   return Number(r);
-// };`
-// }
-//
-// function runSource({sourceCode, opponentId, myId, opponentCode, myCode, history}) {
-//   const wrappedSource = wrapSource(sourceCode);
-//   const program = new Function(wrappedSource);
-//
-//   const funParams = program.slice(program.indexOf('(') + 1, program.indexOf(')'));
-//   const funBody = program.slice(program.indexOf('{') + 1, program.lastIndexOf('}'));
-//   const dynamicFunction = new Function(funParams, funBody);
-//
-//   const invertedHistory = history.map(({m, o}) => {
-//     return {
-//       m: 1-m,
-//       o: 1-o,
-//     };
-//   });
-//
-//   function genericFunction
-//
-//   return dynamicFunction(
-//       opponentId, //d
-//       myId, // m
-//       opponentCode, // c
-//       myCode, // s
-//       genericFunction, // f
-//       history, // h
-//       invertedHistory, // i
-//   )
-//
-// }
-//
-
-//
-// function runMatch(program, opponent) {
-//   let score = 0;
-//
-//   const numMatches = Math.floor(Math.random() * 100);
-//
-//   for (let i = 0; i < numMatches; i++) {
-//
-//     const aCooperates = runSource(program.sourceCode);
-//
-//     const result = program.run(opponent);
-//     if (result === 'win') {
-//       score += 1;
-//     } else if (result === 'lose') {
-//       score -= 1;
-//     }
-//   }
-// }
-//
 function runTournament() {
   for (let repeat = 0; repeat < 1; repeat++) {
     for (let i = 0; i < programs.length; i++) {
